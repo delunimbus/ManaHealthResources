@@ -1,6 +1,6 @@
 local lib = {}
 
-function Lib:init()
+function lib:init()
     print("Loaded Mana-Health Resources " .. self.info.version .. "!")
 end
 
