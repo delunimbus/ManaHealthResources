@@ -1,7 +1,7 @@
 {
     "id": "mana_and_hp_resources",
     
-    "version": "v1.0.0",
+    "version": "v1.0.1",
     "engineVer": "v0.10.0-dev",
     
     "authors": [
@@ -11,4 +11,5 @@
     "config": {
 	}
 }
+
 
