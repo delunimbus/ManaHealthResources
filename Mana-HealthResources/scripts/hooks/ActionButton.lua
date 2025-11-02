@@ -84,8 +84,6 @@ function ActionButton:select()
                 ["tp"] = spell:getTPCost(self.battler.chara),
                 ["mp"] = spell:getMPCost(self.battler.chara),
                 ["resource"] = spell:getResourceType(self.battler.chara),
-                --["stock"] = spell:getStock(self.battler.chara),
-                --["stock_limit"] = spell:getStockLimit(self.battler.chara),
                 ["hp"] = spell:getHPCost(self.battler.chara),
                 ["unusable"] = not spell:isUsable(self.battler.chara),
                 ["description"] = spell:getBattleDescription(),
@@ -111,6 +109,43 @@ function ActionButton:select()
         end
         Game.battle:setState("MENUSELECT", "SPELL")
     end
+end
+
+function ActionButton:hasSpecial()
+    if self.type == "magic" then
+        if self.battler then
+            local has_tired = false
+            for _,enemy in ipairs(Game.battle:getActiveEnemies()) do
+                if enemy.tired then
+                    has_tired = true
+                    break
+                end
+            end
+            if has_tired then
+                local has_pacify = false
+                for _,spell in ipairs(self.battler.chara:getSpells()) do
+                    if spell and spell:hasTag("spare_tired") then
+                        if spell:isUsable(self.battler.chara) then
+                            if  (spell:getResourceType(self.battler.chara) == "tension" and spell:getTPCost(self.battler.chara) <= Game:getTension()) or
+                                (spell:getResourceType(self.battler.chara) == "health" and spell:getHPCostFlat(self.battler.chara) < self.battler.chara:getHealth()) or
+                                (spell:getResourceType(self.battler.chara) == "mana" and spell:getMPCost(self.battler.chara) <= self.battler.chara:getMana()) then
+                                has_pacify = true
+                                break
+                            end
+                        end
+                    end
+                end
+                return has_pacify
+            end
+        end
+    elseif self.type == "spare" then
+        for _,enemy in ipairs(Game.battle:getActiveEnemies()) do
+            if enemy.mercy >= 100 then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 return ActionButton
