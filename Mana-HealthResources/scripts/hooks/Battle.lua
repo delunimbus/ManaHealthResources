@@ -375,24 +375,61 @@ function Battle:commitAction(battler, action_type, target, data, extra)
         end
     end
 
-    self:commitSingleAction(Utils.merge({
-        ["character_id"] = party_id,
-        ["action"] = action_type:upper(),
-        ["party"] = data.party,
-        ["name"] = data.name,
-        ["resource"] = data.resource,
-        ["target"] = target,
-        ["data"] = data.data,
-        ["tp"] = tp_diff,
-        ["mp"] = data.mp,
-        ["hp"] = data.hp,
-        ["cancellable"] = data.cancellable,
-    }, extra))
+    self:commitSingleAction(
+        TableUtils.merge(
+            {
+                ["character_id"] = party_id,
+                ["action"] = action_type:upper(),
+                ["party"] = data.party,
+                ["name"] = data.name,
+                ["target"] = target,
+                ["data"] = data.data,
+                ["resource"] = data.resource,
+                ["tp"] = tp_diff,
+                ["mp"] = data.mp,
+                ["hp"] = data.hp,
+                ["cancellable"] = data.cancellable,
+            },
+            extra
+        )
+    )
+
+        if data.party then
+        for _, v in ipairs(data.party) do
+            local index = self:getPartyIndex(v)
+
+            if index ~= party_id then
+                local action = self.character_actions[index]
+                if action then
+                    if action.act_parent then
+                        self:removeAction(action.act_parent)
+                    else
+                        self:removeAction(index)
+                    end
+                end
+
+                self:commitSingleAction(
+                    TableUtils.merge(
+                        {
+                            ["character_id"] = index,
+                            ["action"] = "SKIP",
+                            ["reason"] = action_type:upper(),
+                            ["name"] = data.name,
+                            ["target"] = target,
+                            ["data"] = data.data,
+                            ["act_parent"] = party_id,
+                            ["cancellable"] = data.cancellable,
+                        },
+                        extra
+                    )
+                )
+            end
+        end
+    end
 
 end
 
 function Battle:canSelectMenuItem(menu_item)
-    --print(menu_item.resource)
     if menu_item.unusable then
         return false
     end
@@ -455,8 +492,7 @@ function Battle:commitSingleAction(action)
 
     local anim = action.action:lower()
 
-    if action.action == "SPELL" and action.data --[[and not action.spenders]] then
-        --print(action.mp)
+    if action.action == "SPELL" and action.data then
         local result = action.data:onSelect(battler, action.target)
         if result ~= false then
             if action.tp and action.resource == "tension" then
@@ -466,7 +502,6 @@ function Battle:commitSingleAction(action)
                     Game:removeTension(-action.tp)
                 end
             elseif action.mp and action.resource == "mana" then
-                ---print(action.mp)
                 if action.mp > 0 then
                     battler.chara:setMana(battler.chara:getMana() - action.mp)
                 elseif action.mp < 0 then
@@ -483,33 +518,27 @@ function Battle:commitSingleAction(action)
         action.icon = anim
         end
     else
-        --if not action.spenders then
-            if action.tp and (action.resource == "tension" or action.action == "DEFEND") then
-                --print(action.tp)
-                if action.tp > 0 then
-                    Game:giveTension(action.tp)
-                elseif action.tp < 0 then
-                    Game:removeTension(-action.tp)
-                end
+        if action.tp and (action.resource == "tension" or action.action == "DEFEND") then
+            if action.tp > 0 then
+                Game:giveTension(action.tp)
+            elseif action.tp < 0 then
+                Game:removeTension(-action.tp)
             end
-            if action.mp and action.resource == "mana"and not action.spenders then
-                if action.mp > 0 then
-                    battler.chara:setMana(battler.chara:getMana() - action.mp)
-                elseif action.mp < 0 then
-                    battler.chara:setMana(battler.chara:getMana() + action.mp)
-                end
+        end
+        if action.mp then
+            if action.mp > 0 then
+                battler.chara:setMana(battler.chara:getMana() - action.mp)
+            elseif action.mp < 0 then
+                battler.chara:setMana(battler.chara:getMana() + action.mp)
             end
-            if action.stock and action.resource == "stock" then
-                battler.chara:removeStock(action.data, 1)
+        end
+        if action.hp and action.resource == "health" then
+            if action.hp > 0 then
+                battler.chara:heal(-action.hp)
+            elseif action.hp < 0 then
+                self:hurt(-action.hp, true, battler)
             end
-            if action.hp and action.resource == "health" then
-                if action.hp > 0 then
-                    battler.chara:heal(-action.hp)
-                elseif action.hp < 0 then
-                    self:hurt(-action.hp, true, battler)
-                end
-            end
-        --end
+        end
 
         if action.action == "SKIP" and action.reason then
             anim = action.reason:lower()
@@ -534,7 +563,7 @@ function Battle:removeSingleAction(action)
     battler:resetSprite()
 
 
-    if action.tp --[[or (action.tp and action.action == "SPELL" and]] and (action.resource == "tension" or action.action == "DEFEND") then
+    if action.tp and (action.resource == "tension" or action.action == "DEFEND") then
         if action.tp < 0 then
             Game:giveTension(-action.tp)
         elseif action.tp > 0 then
