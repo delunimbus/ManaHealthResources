@@ -18,18 +18,21 @@
             "zero_tension":     "u"
         },
 
-        //Whether to allow mana to go negative in battle, just like health
+        //Whether to allow mana to go negative
         "negative_mana":            false,
 
         //Whether to keep mana at negative values after battle
         "keep_negative_mana":       false,
+
+        //Whether to omit the hurt message and animation when selecting an action that costs health
+        "omit_hurt_effects_from_hp_cost": true,
 
         //Whether to use the lib's own DarkPowerMenu overworld spell usability changes
         //Only set to `false` if planning to do your own criteria
         "use_propietary_darkpowermenu_spell_usability_changes":    true,
 
         //Whether to use the lib's built-in UI
-        //Set `false` to not use the lib's UI (only if original UI will be used)
+        //Set `false` to not use the lib's UI (only if custom UI will be used)
         "use_propietary_ui": {
             "OverworldActionBox":   true,
             "DarkPowerMenu":        true,
