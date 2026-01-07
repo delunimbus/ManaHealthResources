@@ -28,7 +28,7 @@ function ActionButton:select()
                 ["data"] = spell,
                 ["callback"] = function(menu_item)
                     Game.battle.selected_xaction = spell
-                    Game.battle:setState("XACTENEMYSELECT", "SPELL")
+                    Game.battle:setState("ENEMYSELECT", "XACT")
                 end
             })
         end
@@ -42,19 +42,19 @@ function ActionButton:select()
                     ["default"] = false,
                     ["party"] = {},
                     ["tp"] = action.tp or 0,
-                    --["resource"] = action.resource or "tension"
+                    ["resource"] = action.resource or "tension"
                 }
 
                 Game.battle:addMenuItem({
                     ["name"] = action.name,
                     ["tp"] = action.tp or 0,
-                    --["resource"] = action.resource or "tension",
+                    ["resource"] = action.resource or "tension",
                     ["description"] = action.description,
                     ["color"] = action.color or {1, 1, 1, 1},
                     ["data"] = spell,
                     ["callback"] = function(menu_item)
                         Game.battle.selected_xaction = spell
-                        Game.battle:setState("XACTENEMYSELECT", "SPELL")
+                        Game.battle:setState("ENEMYSELECT", "XACT")
                     end
                 })
             end
